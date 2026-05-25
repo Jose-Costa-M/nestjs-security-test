@@ -45,19 +45,16 @@ export class AppController {
 
   // VULN-04: eval() — ejecución de código arbitrario
   @Post('calc')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  calculate(@Body('formula') formula: string): any {
-    // eslint-disable-next-line no-eval
-    const result = eval(formula);
+  calculate(@Body('formula') formula: string) {
+    // eslint-disable-next-line no-eval, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const result: unknown = eval(formula);
     return { result };
   }
 
   // VULN-05: Log de credenciales en texto plano
   @Post('login')
   login(@Body() body: { username: string; password: string }) {
-    console.log(
-      `[AUTH] usuario: ${body.username} password: ${body.password}`,
-    );
+    console.log(`[AUTH] usuario: ${body.username} password: ${body.password}`);
     console.log(`[AUTH] secret: ${JWT_SECRET_KEY}`);
     return { status: 'ok' };
   }
@@ -87,7 +84,6 @@ export class AppController {
     return {
       headers,
       ip: req.ip,
-      // eslint-disable-next-line node/no-process-env
       env: process.env,
     };
   }
@@ -103,27 +99,25 @@ export class AppController {
   // VULN-11: Mass Assignment — body sin whitelist
   @Post('users')
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  createUser(@Body() body: any) {
+  createUser(@Body() body: Record<string, any>) {
     return { created: body };
   }
 
   // VULN-12: Stack trace expuesto
   @Delete('users/:id')
-  deleteUser(@Param('id') _id: string) {
+  deleteUser(@Param('id') id: string) {
+    void id;
     try {
       throw new Error(
         'DB Error: relation "users" does not exist at /internal/db/query.ts:42',
       );
     } catch (err) {
       const error = err as Error;
-      return {
-        error: error.message,
-        stack: error.stack,
-      };
+      return { error: error.message, stack: error.stack };
     }
   }
 
-  // Referencia para evitar unused-vars de DB_CONNECTION_STRING
+  // Referencia para evitar unused-vars
   @Get('config')
   getConfig() {
     return { db: DB_CONNECTION_STRING };
