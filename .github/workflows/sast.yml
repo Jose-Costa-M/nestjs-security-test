@@ -6,6 +6,10 @@ on:
   push:
     branches: [develop, main]
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   gitleaks:
     name: "Gitleaks · Secrets scan"
@@ -25,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: semgrep/semgrep
+    permissions:
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 
