@@ -1,0 +1,62 @@
+name: "Security · SAST"
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+jobs:
+  gitleaks:
+    name: "Gitleaks · Secrets scan"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: "Semgrep · SAST"
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Semgrep scan
+        run: |
+          semgrep scan \
+            --config p/typescript \
+            --config p/owasp-top-ten \
+            --config .semgrep.yml \
+            --error \
+            --sarif --output semgrep.sarif \
+            src/
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  eslint-security:
+    name: "ESLint · Security"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint check
+        run: npx eslint src/ --ext .ts --max-warnings 0

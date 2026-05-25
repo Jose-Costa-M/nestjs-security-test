@@ -1,0 +1,63 @@
+# .gitleaks.toml
+# Configuración de Gitleaks para repos NestJS / Next.js
+
+[extend]
+useDefault = true
+
+[[rules]]
+description = "Connection string de base de datos"
+id = "project-db-connstring"
+regex = '''postgresql://[^:]+:[^@]+@[^/]+/\S+'''
+severity = "CRITICAL"
+tags = ["database", "postgresql"]
+
+[[rules]]
+description = "JWT Secret hardcodeado"
+id = "project-jwt-secret"
+regex = '''(?i)(jwt[_-]?secret|jwt[_-]?key)\s*[=:]\s*['"][^'"]{8,}['"]'''
+severity = "CRITICAL"
+tags = ["jwt", "auth"]
+
+[[rules]]
+description = "OpenAI / Anthropic API Key"
+id = "project-ai-api-key"
+regex = '''sk-[a-zA-Z0-9_-]{20,}'''
+severity = "CRITICAL"
+tags = ["ai", "openai", "anthropic"]
+
+[[rules]]
+description = "Variable de entorno con password en código"
+id = "project-hardcoded-password"
+regex = '''(?i)(password|passwd|pwd)\s*[=:]\s*['"][^'"$\{]{4,}['"]'''
+severity = "HIGH"
+tags = ["password", "credentials"]
+
+[[rules]]
+description = "Private key RSA/EC hardcodeada"
+id = "project-private-key"
+regex = '''-----BEGIN (RSA |EC )?PRIVATE KEY-----'''
+severity = "CRITICAL"
+tags = ["crypto", "private-key"]
+
+[allowlist]
+description = "Ignorar archivos de test, documentación, ejemplos y build"
+paths = [
+  '''.*\.test\.ts$''',
+  '''.*\.spec\.ts$''',
+  '''.*\.example\.env$''',
+  '''.*\.env\.example$''',
+  '''.*__fixtures__.*''',
+  '''.*__mocks__.*''',
+  '''.*gitleaks\.toml$''',
+  '''README\.md$''',
+  '''dist/.*''',
+]
+
+regexes = [
+  '''your[_-]?(secret|key|token|password)''',
+  '''change[_-]?me''',
+  '''<YOUR_.*>''',
+  '''\$\{.*\}''',
+  '''process\.env\.\w+''',
+  '''token=abc123''',
+]

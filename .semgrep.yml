@@ -1,0 +1,63 @@
+rules:
+
+  - id: nestjs-jwt-hardcoded-secret
+    patterns:
+      - pattern: |
+          const $VAR = '$SECRET'
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i)(jwt[_-]?secret|jwt[_-]?key|secret[_-]?key)
+    message: |
+      JWT secret hardcodeado en variable: $VAR
+      Usar: process.env.JWT_SECRET
+    languages: [typescript]
+    severity: ERROR
+
+  - id: nestjs-eval-injection
+    pattern: eval($INPUT)
+    message: |
+      eval() con input del usuario — ejecución de código arbitrario.
+      Nunca usar eval() con datos externos.
+    languages: [typescript, javascript]
+    severity: ERROR
+
+  - id: nestjs-sql-template-injection
+    patterns:
+      - pattern: |
+          `SELECT * FROM $TABLE WHERE $COL = ${$INPUT}`
+      - pattern: |
+          `... WHERE ... ${$INPUT} ...`
+    message: |
+      SQL Injection: interpolación directa en query.
+      Usar consultas parametrizadas.
+    languages: [typescript, javascript]
+    severity: ERROR
+
+  - id: nestjs-console-log-password
+    patterns:
+      - pattern: |
+          console.log($X)
+      - metavariable-regex:
+          metavariable: $X
+          regex: (?i).*(password|passwd|pwd|secret|token).*
+    message: |
+      Log de datos sensibles detectado.
+      Nunca loguear passwords, secrets o tokens.
+    languages: [typescript, javascript]
+    severity: WARNING
+
+  - id: hardcoded-secret-variable
+    patterns:
+      - pattern: |
+          const $VAR = '$VALUE'
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i)(secret|jwt_secret|api_key|password|token)
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: .{8,}
+    message: |
+      Secret hardcodeado en: $VAR
+      Mover a variables de entorno o Azure Key Vault.
+    languages: [typescript, javascript]
+    severity: ERROR
