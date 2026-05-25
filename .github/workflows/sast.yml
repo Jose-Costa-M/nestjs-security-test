@@ -40,9 +40,14 @@ jobs:
             --config p/typescript \
             --config p/owasp-top-ten \
             --config .semgrep.yml \
-            --error \
             --sarif --output semgrep.sarif \
-            src/
+            src/ || true
+
+      - name: Verificar SARIF generado
+        run: |
+          if [ ! -f semgrep.sarif ]; then
+            echo '{"version":"2.1.0","runs":[]}' > semgrep.sarif
+          fi
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
@@ -50,6 +55,15 @@ jobs:
         with:
           sarif_file: semgrep.sarif
           category: semgrep
+
+      - name: Evaluar findings
+        run: |
+          semgrep scan \
+            --config p/typescript \
+            --config p/owasp-top-ten \
+            --config .semgrep.yml \
+            --error \
+            src/
 
   eslint-security:
     name: "ESLint · Security"
