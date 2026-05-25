@@ -46,8 +46,7 @@ export class AppController {
   // VULN-04: eval() — ejecución de código arbitrario
   @Post('calc')
   calculate(@Body('formula') formula: string) {
-    // eslint-disable-next-line no-eval, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const result: unknown = eval(formula);
+    const result: unknown = eval(formula); // noqa
     return { result };
   }
 
@@ -98,8 +97,7 @@ export class AppController {
 
   // VULN-11: Mass Assignment — body sin whitelist
   @Post('users')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  createUser(@Body() body: Record<string, any>) {
+  createUser(@Body() body: Record<string, unknown>) {
     return { created: body };
   }
 
@@ -117,7 +115,7 @@ export class AppController {
     }
   }
 
-  // Referencia para evitar unused-vars
+  // Referencia para evitar unused-vars de DB_CONNECTION_STRING
   @Get('config')
   getConfig() {
     return { db: DB_CONNECTION_STRING };
