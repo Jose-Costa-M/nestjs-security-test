@@ -47,7 +47,6 @@ export class AppController {
 
   // VULN-04: eval() RCE — detectado por Semgrep + ESLint (no-eval)
   @Post('calc')
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   calculate(@Body('formula') formula: string) {
     // eslint-disable-next-line no-eval
     const result = eval(formula);
@@ -118,7 +117,7 @@ export class AppController {
     }
   }
 
-  // Referencia para DB_CONNECTION_STRING (evitar unused-vars)
+  // Referencia para DB_CONNECTION_STRING
   @Get('config')
   getConfig() {
     return { db: DB_CONNECTION_STRING };

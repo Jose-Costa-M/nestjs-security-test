@@ -20,9 +20,17 @@ jobs:
           fetch-depth: 0
 
       - name: Gitleaks scan
+        id: gitleaks
         uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fallar si hay leaks
+        if: steps.gitleaks.outcome == 'failure'
+        run: |
+          echo "❌ Gitleaks detectó secrets en el código"
+          exit 1
 
   semgrep:
     name: "Semgrep · SAST"
@@ -56,7 +64,7 @@ jobs:
           sarif_file: semgrep.sarif
           category: semgrep
 
-      - name: Evaluar findings
+      - name: Evaluar findings — bloquear si hay CRITICAL/HIGH
         run: |
           semgrep scan \
             --config p/typescript \
