@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Put,
   Delete,
   Body,
   Param,
@@ -122,14 +121,14 @@ export class AppController {
     }
   }
 
-  // VULN-13: Algoritmo de hash débil (MD5)
+  // VULN-13: Hash débil MD5
   @Post('hash')
   hashPassword(@Body('password') password: string) {
     const hash = crypto.createHash('md5').update(password).digest('hex');
     return { hash };
   }
 
-  // VULN-14: Algoritmo de cifrado débil (DES)
+  // VULN-14: Cifrado débil DES
   @Post('encrypt')
   encryptData(@Body('data') data: string) {
     const key = Buffer.from('12345678');
@@ -138,50 +137,45 @@ export class AppController {
     return { encrypted };
   }
 
-  // VULN-15: Número aleatorio no criptográfico para token
+  // VULN-15: Math.random() para tokens
   @Get('token')
   generateToken() {
     const token = Math.random().toString(36).substring(2);
     return { token };
   }
 
-  // VULN-16: Open Redirect — redirige a cualquier URL
+  // VULN-16: Open Redirect
   @Get('redirect')
   redirect(@Query('url') url: string, @Req() req: Request) {
-    // Sin validar que url sea un dominio conocido
     return { redirect: url, host: req.hostname };
   }
 
-  // VULN-17: Command Injection simulado
+  // VULN-17: Command Injection
   @Post('ping')
   ping(@Body('host') host: string) {
     const command = `ping -c 1 ${host}`;
-    // exec(command) — un atacante manda: "localhost; rm -rf /"
     return { command };
   }
 
-  // VULN-18: XML External Entity (XXE) simulado
+  // VULN-18: XXE simulado
   @Post('parse-xml')
   parseXml(@Body('xml') xml: string) {
-    // Parser sin deshabilitar external entities
     return { parsed: xml, warning: 'XXE vulnerable parser' };
   }
 
-  // VULN-19: Comparación de strings no segura (timing attack)
+  // VULN-19: Timing Attack
   @Post('verify-token')
   verifyToken(
     @Body('token') token: string,
     @Body('expected') expected: string,
   ) {
-    // Vulnerable a timing attack — usar crypto.timingSafeEqual()
     const isValid = token === expected;
     return { isValid };
   }
 
-  // VULN-20: JWT sin verificación de algoritmo
+  // VULN-20: JWT sin verificación de firma
   @Post('decode-jwt')
   decodeJwt(@Body('token') token: string) {
-    // Decodifica sin verificar firma ni algoritmo
     const parts = token.split('.');
     const payload = Buffer.from(parts[1], 'base64').toString('utf8');
     return { payload };
