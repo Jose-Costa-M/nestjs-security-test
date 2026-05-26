@@ -13,9 +13,11 @@ import { AppService } from './app.service';
 
 // =============================================================
 // ARCHIVO DE PRUEBA — VULNERABILIDADES INTENCIONALES
+// Detectadas por: Gitleaks (VULN-01), Semgrep (VULN-01,02,03,04,05)
+// Requieren revisión manual: VULN-06 al 12
 // =============================================================
 
-// VULN-01: Secrets hardcodeados
+// VULN-01: Secrets hardcodeados — detectado por Gitleaks + Semgrep
 const DB_CONNECTION_STRING =
   'postgresql://admin:Inol4b$uper$ecret@prod-db.inolab.com:5432/clientes';
 const JWT_SECRET_KEY = 'mi-jwt-secret-inolab-2024-produccion';
@@ -29,28 +31,30 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  // VULN-02: SQL Injection — parámetro de ruta
+  // VULN-02: SQL Injection — detectado por Semgrep
   @Get('users/:id')
   getUser(@Param('id') id: string) {
     const query = `SELECT * FROM users WHERE id = ${id}`;
     return { query };
   }
 
-  // VULN-03: SQL Injection — búsqueda con LIKE
+  // VULN-03: SQL Injection con LIKE — detectado por Semgrep
   @Get('search')
   searchUsers(@Body('term') term: string) {
     const query = `SELECT * FROM users WHERE name LIKE '%${term}%'`;
     return { query };
   }
 
-  // VULN-04: eval() — ejecución de código arbitrario
+  // VULN-04: eval() RCE — detectado por Semgrep + ESLint (no-eval)
   @Post('calc')
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   calculate(@Body('formula') formula: string) {
-    const result: unknown = eval(formula); // noqa
+    // eslint-disable-next-line no-eval
+    const result = eval(formula);
     return { result };
   }
 
-  // VULN-05: Log de credenciales en texto plano
+  // VULN-05: Log de credenciales — detectado por Semgrep
   @Post('login')
   login(@Body() body: { username: string; password: string }) {
     console.log(`[AUTH] usuario: ${body.username} password: ${body.password}`);
@@ -58,26 +62,26 @@ export class AppController {
     return { status: 'ok' };
   }
 
-  // VULN-06: XSS — dangerouslySetInnerHTML sin sanitizar
+  // VULN-06: XSS — revisión manual
   @Get('render')
   renderContent(@Body('html') html: string) {
     return `<div dangerouslySetInnerHTML={{ __html: ${html} }} />`;
   }
 
-  // VULN-07: Path Traversal
+  // VULN-07: Path Traversal — revisión manual
   @Get('files/:filename')
   getFile(@Param('filename') filename: string) {
-    const path = `/var/app/uploads/${filename}`;
-    return { path };
+    const filePath = `/var/app/uploads/${filename}`;
+    return { filePath };
   }
 
-  // VULN-08: IDOR — sin verificación de ownership
+  // VULN-08: IDOR — revisión manual
   @Get('profile/:userId')
   getProfile(@Param('userId') userId: string) {
     return { userId, data: 'datos sensibles del usuario' };
   }
 
-  // VULN-09: Exposición de variables de entorno
+  // VULN-09: Exposición de process.env — revisión manual
   @Get('debug')
   debug(@Headers() headers: Record<string, string>, @Req() req: Request) {
     return {
@@ -87,7 +91,7 @@ export class AppController {
     };
   }
 
-  // VULN-10: ReDoS — regex catastrófico
+  // VULN-10: ReDoS — revisión manual
   @Post('validate-email')
   validateEmail(@Body('email') email: string) {
     const regex =
@@ -95,16 +99,15 @@ export class AppController {
     return { valid: regex.test(email) };
   }
 
-  // VULN-11: Mass Assignment — body sin whitelist
+  // VULN-11: Mass Assignment — revisión manual
   @Post('users')
   createUser(@Body() body: Record<string, unknown>) {
     return { created: body };
   }
 
-  // VULN-12: Stack trace expuesto
+  // VULN-12: Stack trace expuesto — revisión manual
   @Delete('users/:id')
-  deleteUser(@Param('id') id: string) {
-    void id;
+  deleteUser(@Param('id') _id: string) {
     try {
       throw new Error(
         'DB Error: relation "users" does not exist at /internal/db/query.ts:42',
@@ -115,7 +118,7 @@ export class AppController {
     }
   }
 
-  // Referencia para evitar unused-vars de DB_CONNECTION_STRING
+  // Referencia para DB_CONNECTION_STRING (evitar unused-vars)
   @Get('config')
   getConfig() {
     return { db: DB_CONNECTION_STRING };
