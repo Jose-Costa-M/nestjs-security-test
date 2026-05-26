@@ -4,10 +4,14 @@
 [extend]
 useDefault = true
 
+# ──────────────────────────────────────────
+# Reglas personalizadas del proyecto
+# ──────────────────────────────────────────
+
 [[rules]]
-description = "Connection string de base de datos"
+description = "Connection string PostgreSQL con credenciales"
 id = "project-db-connstring"
-regex = '''postgresql://[^:]+:[^@]+@[^/]+/\S+'''
+regex = '''postgresql://[^:'"]+:[^@'"]{4,}@[^/'"]+/[^\s'"]+'''
 severity = "CRITICAL"
 tags = ["database", "postgresql"]
 
@@ -19,14 +23,28 @@ severity = "CRITICAL"
 tags = ["jwt", "auth"]
 
 [[rules]]
+description = "Azure Storage Connection String"
+id = "project-azure-storage"
+regex = '''AccountKey=[a-zA-Z0-9+/]{20,}={0,2}'''
+severity = "CRITICAL"
+tags = ["azure", "storage"]
+
+[[rules]]
+description = "Azure Storage Account Key standalone"
+id = "project-azure-account-key"
+regex = '''(?i)(azure[_-]?storage[_-]?key|storage[_-]?key|account[_-]?key)\s*[=:]\s*['"][^'"]{10,}['"]'''
+severity = "CRITICAL"
+tags = ["azure", "cloud"]
+
+[[rules]]
 description = "OpenAI / Anthropic API Key"
 id = "project-ai-api-key"
 regex = '''sk-[a-zA-Z0-9_-]{20,}'''
 severity = "CRITICAL"
-tags = ["ai", "openai", "anthropic"]
+tags = ["ai", "openai"]
 
 [[rules]]
-description = "Variable de entorno con password en código"
+description = "Password hardcodeado en variable"
 id = "project-hardcoded-password"
 regex = '''(?i)(password|passwd|pwd)\s*[=:]\s*['"][^'"$\{]{4,}['"]'''
 severity = "HIGH"
@@ -39,8 +57,19 @@ regex = '''-----BEGIN (RSA |EC )?PRIVATE KEY-----'''
 severity = "CRITICAL"
 tags = ["crypto", "private-key"]
 
+[[rules]]
+description = "DefaultEndpointsProtocol Azure"
+id = "project-azure-connstring"
+regex = '''DefaultEndpointsProtocol=https;AccountName=[^;]+;AccountKey=[^;]+'''
+severity = "CRITICAL"
+tags = ["azure", "storage"]
+
+# ──────────────────────────────────────────
+# Allowlist
+# ──────────────────────────────────────────
+
 [allowlist]
-description = "Ignorar archivos de test, documentación, ejemplos y build"
+description = "Ignorar archivos de test, documentación y build"
 paths = [
   '''.*\.test\.ts$''',
   '''.*\.spec\.ts$''',
